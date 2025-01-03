@@ -8,10 +8,10 @@
 import UIKit
 import SnapKit
 
-class CustomSearchBar: UIView {
+class CustomSearchBar: UIView, UITextFieldDelegate {
 
-    private let searchTextField = UITextField()
-    private let searchButton = UIButton()
+    let searchTextField = UITextField()
+    let searchButton = UIButton()
     private let underlineView = UIView()
 
 
@@ -19,6 +19,7 @@ class CustomSearchBar: UIView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         setupUI()
+        searchTextField.delegate = self
     }
 
     required init?(coder: NSCoder) {
@@ -70,6 +71,11 @@ class CustomSearchBar: UIView {
 
         searchTextField.snp.makeConstraints {
             $0.right.equalTo(searchButton.snp.left).offset(-8)
+        }
+        
+        func textFieldShouldReturn(_ textField: UITextField) -> Bool {
+            textField.resignFirstResponder() // 키보드 숨기기
+            return true
         }
     }
 }

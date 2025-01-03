@@ -5,16 +5,27 @@
 //  Created by 강민성 on 12/26/24.
 //
 
+//
+//  ViewController.swift
+//  Advanced
+//
+
 import UIKit
 import SnapKit
+import CoreData
 
 class SearchViewController: UIViewController, UICollectionViewDelegate, UICollectionViewDataSource {
-    
+
     private let viewModel = SearchViewModel()
-    private let customSearchBar = CustomSearchBar()
+    let customSearchBar = CustomSearchBar()
     private let recentBooksStackView = UIStackView()
+    private let recentBooksScrollView = UIScrollView()
     private let collectionView: UICollectionView
-    
+    private let searchResultsHeaderLabel = UILabel()
+    private let recentBooksLabel = UILabel()
+    private let searchTabButton = UIButton()
+    private let savedBooksTabButton = UIButton()
+
     init() {
         let layout = SearchViewController.createCompositionalLayout()
         collectionView = UICollectionView(frame: .zero, collectionViewLayout: layout)
@@ -28,141 +39,263 @@ class SearchViewController: UIViewController, UICollectionViewDelegate, UICollec
     override func viewDidLoad() {
         super.viewDidLoad()
         setupUI()
+        bindViewModel()
     }
 
     private func setupUI() {
         view.backgroundColor = .white
+        setupSearchBar()
+        setupRecentBooks()
+        setupSearchResults()
+        setupCollectionView()
+        setupBottomTabs()
+    }
 
-        // Custom SearchBar
+    private func setupSearchBar() {
         view.addSubview(customSearchBar)
         customSearchBar.snp.makeConstraints {
             $0.top.equalTo(view.safeAreaLayoutGuide).offset(10)
             $0.left.right.equalToSuperview().inset(16)
             $0.height.equalTo(50)
         }
+        customSearchBar.searchButton.addTarget(self, action: #selector(handleSearch), for: .touchUpInside)
+    }
 
-        // "최근 본 책" 타이틀
-        let titleLabel = UILabel()
-        titleLabel.text = "최근 본 책"
-        titleLabel.font = UIFont.boldSystemFont(ofSize: 20)
-        view.addSubview(titleLabel)
-        titleLabel.snp.makeConstraints {
+    private func setupRecentBooks() {
+        recentBooksLabel.text = "최근 본 책"
+        recentBooksLabel.font = UIFont.boldSystemFont(ofSize: 20)
+        view.addSubview(recentBooksLabel)
+        recentBooksLabel.snp.makeConstraints {
             $0.top.equalTo(customSearchBar.snp.bottom).offset(16)
             $0.left.equalToSuperview().offset(16)
         }
+        
+        
+        recentBooksScrollView.showsHorizontalScrollIndicator = false
+        view.addSubview(recentBooksScrollView)
+        recentBooksScrollView.snp.makeConstraints {
+            $0.top.equalTo(recentBooksLabel.snp.bottom).offset(8)
+            $0.left.right.equalToSuperview()
+            $0.height.equalTo(80)
+        }
 
-        // RecentBooks StackView
         recentBooksStackView.axis = .horizontal
-        recentBooksStackView.distribution = .fillEqually
         recentBooksStackView.spacing = 16
+        recentBooksStackView.isHidden = true
         view.addSubview(recentBooksStackView)
         recentBooksStackView.snp.makeConstraints {
-            $0.top.equalTo(titleLabel.snp.bottom).offset(8)
-            $0.left.right.equalToSuperview().inset(32)
-            $0.height.equalTo(70) // 크기 조정
-        }
-
-        // Add Recent Book Circles
-        for _ in 0..<4 {
-            let circleView = UIView()
-            circleView.backgroundColor = .red
-            circleView.layer.cornerRadius = 35 // 크기 조정 (80 / 2)
-            circleView.layer.borderColor = UIColor.black.cgColor
-            circleView.layer.borderWidth = 1
-            recentBooksStackView.addArrangedSubview(circleView)
-
-            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCircleTap))
-            circleView.addGestureRecognizer(tapGesture)
-            circleView.isUserInteractionEnabled = true
-        }
-
-        // 밑줄
-        let underlineView = UIView()
-        underlineView.backgroundColor = .lightGray
-        view.addSubview(underlineView)
-        underlineView.snp.makeConstraints {
-            $0.top.equalTo(recentBooksStackView.snp.bottom).offset(10)
+            $0.top.equalTo(recentBooksLabel.snp.bottom).offset(8)
             $0.left.right.equalToSuperview().inset(16)
-            $0.height.equalTo(1)
+            $0.height.equalTo(70)
         }
-        
-        // "검색 결과" 타이틀
-        let searchResultsTitleLabel = UILabel()
-        searchResultsTitleLabel.text = "검색 결과"
-        searchResultsTitleLabel.font = UIFont.boldSystemFont(ofSize: 20)
-        view.addSubview(searchResultsTitleLabel)
-        searchResultsTitleLabel.snp.makeConstraints {
-            $0.top.equalTo(underlineView.snp.bottom).offset(16)
+    }
+
+    private func setupSearchResults() {
+        searchResultsHeaderLabel.text = "검색 결과"
+        searchResultsHeaderLabel.font = UIFont.boldSystemFont(ofSize: 20)
+        view.addSubview(searchResultsHeaderLabel)
+        searchResultsHeaderLabel.snp.makeConstraints {
+            $0.top.equalTo(recentBooksStackView.snp.bottom).offset(24)
             $0.left.equalToSuperview().offset(16)
         }
+    }
 
-        // CollectionView
+    private func setupCollectionView() {
         collectionView.dataSource = self
         collectionView.delegate = self
         collectionView.register(SearchCollectionViewCell.self, forCellWithReuseIdentifier: "BookCell")
         view.addSubview(collectionView)
         collectionView.snp.makeConstraints {
-            $0.top.equalTo(searchResultsTitleLabel.snp.bottom).offset(16)
+            $0.top.equalTo(searchResultsHeaderLabel.snp.bottom).offset(8)
             $0.left.right.equalToSuperview().inset(16)
             $0.bottom.equalToSuperview().offset(-80)
         }
+    }
 
-        // 하단 버튼
-        let searchTabButton = UIButton()
-        searchTabButton.backgroundColor = .gray
+    private func setupBottomTabs() {
+        let buttonStackView = UIStackView()
+        buttonStackView.axis = .horizontal
+        buttonStackView.spacing = 16
+        buttonStackView.distribution = .fillEqually
+
         searchTabButton.setTitle("검색 탭", for: .normal)
-        searchTabButton.setTitleColor(.black, for: .normal)
+        searchTabButton.backgroundColor = .lightGray
         searchTabButton.layer.borderWidth = 1
         searchTabButton.layer.borderColor = UIColor.black.cgColor
-        view.addSubview(searchTabButton)
-        searchTabButton.snp.makeConstraints {
-            $0.left.equalToSuperview().offset(16)
-            $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-10)
-            $0.height.equalTo(50)
-            $0.right.equalTo(view.snp.centerX).offset(-8) // 버튼 간 간격
-        }
+        searchTabButton.layer.cornerRadius = 8
+        searchTabButton.addTarget(self, action: #selector(openSearchTab), for: .touchUpInside)
+        buttonStackView.addArrangedSubview(searchTabButton)
 
-        let savedBooksTabButton = UIButton()
-        savedBooksTabButton.backgroundColor = .gray
         savedBooksTabButton.setTitle("담은 책 리스트 탭", for: .normal)
-        savedBooksTabButton.setTitleColor(.black, for: .normal)
+        savedBooksTabButton.backgroundColor = .lightGray
         savedBooksTabButton.layer.borderWidth = 1
         savedBooksTabButton.layer.borderColor = UIColor.black.cgColor
-        savedBooksTabButton.addTarget(self, action: #selector(goToSavedBooks), for: .touchUpInside)
-        view.addSubview(savedBooksTabButton)
-        savedBooksTabButton.snp.makeConstraints {
-            $0.right.equalToSuperview().offset(-16)
+        savedBooksTabButton.layer.cornerRadius = 8
+        savedBooksTabButton.addTarget(self, action: #selector(openSavedBooksTab), for: .touchUpInside)
+        buttonStackView.addArrangedSubview(savedBooksTabButton)
+
+        view.addSubview(buttonStackView)
+        buttonStackView.snp.makeConstraints {
+            $0.left.right.equalToSuperview().inset(16)
             $0.bottom.equalTo(view.safeAreaLayoutGuide).offset(-10)
             $0.height.equalTo(50)
-            $0.left.equalTo(view.snp.centerX).offset(8) // 버튼 간 간격
         }
     }
 
-    static func createCompositionalLayout() -> UICollectionViewLayout {
-        let layout = UICollectionViewFlowLayout()
-        layout.itemSize = CGSize(width: UIScreen.main.bounds.width - 32, height: 60) // 높이 조정
-        layout.minimumLineSpacing = 12 // 간격 조정
-        return layout
+    @objc private func openSearchTab() {
+        // 검색 화면에서는 아무 작업도 하지 않음
+        print("현재 검색 화면입니다.")
+    }
+    
+    @objc private func openSavedBooksTab() {
+        // 담은 책 리스트 화면으로 전환
+        if let tabBarController = tabBarController {
+            tabBarController.selectedIndex = 1 // 담은 책 화면의 인덱스
+        }
     }
 
-    @objc private func handleCircleTap() {
-        let detailVC = DetailViewController(book: Book(title: "Sample", price: "10,000원"))
-        detailVC.modalPresentationStyle = .pageSheet
-        present(detailVC, animated: true, completion: nil)
+    private func bindViewModel() {
+        viewModel.onBooksUpdated = { [weak self] in
+            DispatchQueue.main.async {
+                self?.collectionView.reloadData()
+            }
+        }
+
+        viewModel.onRecentBooksUpdated = { [weak self] in
+            self?.updateRecentBooks()
+        }
     }
 
-    @objc private func goToSavedBooks() {
-        let savedBooksVC = SavedBooksViewController()
-        navigationController?.pushViewController(savedBooksVC, animated: true)
+    @objc private func handleSearch() {
+        guard let query = customSearchBar.searchTextField.text, !query.isEmpty else {
+            print("검색어를 입력하세요.")
+            return
+        }
+        
+        // 포커스 해제
+        customSearchBar.searchTextField.resignFirstResponder()
+        
+        // 검색 동작 실행
+        viewModel.searchBooks(query: query)
     }
+
+    private func updateRecentBooks() {
+        recentBooksStackView.arrangedSubviews.forEach { $0.removeFromSuperview() } // 기존 뷰 제거
+
+        for book in viewModel.recentBooks {
+            let imageView = UIImageView()
+            imageView.contentMode = .scaleAspectFill
+            imageView.layer.cornerRadius = 35 // 반지름 설정
+            imageView.clipsToBounds = true
+            imageView.layer.borderColor = UIColor.gray.cgColor // 경계선 설정(옵션)
+            imageView.layer.borderWidth = 1.0
+
+            // 이미지 로드
+            if let url = URL(string: book.thumbnailURL ?? "") {
+                loadImage(from: url) { [weak imageView] image in
+                    imageView?.image = image
+                }
+            } else {
+                imageView.image = UIImage(named: "placeholder")
+            }
+
+            // CircleView
+            let circleView = UIView()
+            circleView.layer.cornerRadius = 35
+            circleView.clipsToBounds = true
+            circleView.addSubview(imageView)
+
+            imageView.snp.makeConstraints { make in
+                make.edges.equalToSuperview() // CircleView와 동일 크기
+            }
+
+            circleView.isUserInteractionEnabled = true
+            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCircleTap(_:)))
+            circleView.addGestureRecognizer(tapGesture)
+
+            recentBooksStackView.addArrangedSubview(circleView)
+        }
+
+        recentBooksStackView.isHidden = viewModel.recentBooks.isEmpty
+    }
+
+    @objc private func handleCircleTap(_ sender: UITapGestureRecognizer) {
+        guard let index = recentBooksStackView.arrangedSubviews.firstIndex(of: sender.view!) else { return }
+        guard let book = viewModel.recentBook(at: index) else { return }
+//        let detailVC = DetailViewController(book: book)
+//        present(detailVC, animated: true, completion: nil)
+    }
+    
+    private func loadImage(from url: URL, completion: @escaping (UIImage?) -> Void) {
+        URLSession.shared.dataTask(with: url) { data, _, error in
+            guard let data = data, error == nil else {
+                completion(nil)
+                return
+            }
+            DispatchQueue.main.async {
+                completion(UIImage(data: data))
+            }
+        }.resume()
+    }
+
 
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        return 10
+        return viewModel.numberOfBooks()
     }
 
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         let cell = collectionView.dequeueReusableCell(withReuseIdentifier: "BookCell", for: indexPath) as! SearchCollectionViewCell
-        cell.configure(with: Book(title: "Sample \(indexPath.row + 1)", price: "\(indexPath.row * 1000)원"))
+        if let book = viewModel.book(at: indexPath.row) {
+            cell.configure(with: book)
+        }
         return cell
+    }
+
+    func collectionView(_ collectionView: UICollectionView, didSelectItemAt indexPath: IndexPath) {
+        guard let selectedBook = viewModel.book(at: indexPath.row) else { return }
+
+        let appDelegate = UIApplication.shared.delegate as! AppDelegate
+        let context = appDelegate.persistentContainer.viewContext
+
+        let fetchRequest: NSFetchRequest<Book> = Book.fetchRequest()
+        fetchRequest.predicate = NSCompoundPredicate(andPredicateWithSubpredicates: [
+            NSPredicate(format: "title == %@", selectedBook.title ?? ""),
+//            NSPredicate(format: "author == %@", selectedBook.author ?? "")
+        ])
+
+        do {
+            let fetchedBooks = try context.fetch(fetchRequest)
+            if fetchedBooks.isEmpty {
+                let detailVC = DetailViewController(kakaoBook: selectedBook)
+                detailVC.delegate = self
+                present(detailVC, animated: true, completion: nil)
+            } else {
+                // 이미 DetailViewController가 표시된 상태에서 알림이 뜨지 않도록 조정
+                if presentedViewController == nil {
+                    let alert = UIAlertController(title: "알림", message: "\(selectedBook.title ?? "") 책은 이미 담겨 있습니다.", preferredStyle: .alert)
+                    alert.addAction(UIAlertAction(title: "확인", style: .default, handler: nil))
+                    present(alert, animated: true, completion: nil)
+                }
+            }
+        } catch {
+            print("Error fetching book: \(error)")
+        }
+  }
+    
+    // 새로운 `createCompositionalLayout` 메서드 추가
+    static func createCompositionalLayout() -> UICollectionViewLayout {
+        let layout = UICollectionViewFlowLayout()
+        layout.itemSize = CGSize(width: UIScreen.main.bounds.width - 32, height: 60) // 셀 크기 설정
+        layout.minimumLineSpacing = 16 // 셀 간 간격 설정
+        return layout
+    }
+}
+
+extension SearchViewController: DetailViewControllerDelegate {
+    func didSaveBook(_ book: Book) {
+        viewModel.addRecentBook(book)
+        let alert = UIAlertController(title: "알림", message: "\(book.title ?? "") 책 담기 완료!", preferredStyle: .alert)
+        alert.addAction(UIAlertAction(title: "확인", style: .default, handler: nil))
+        present(alert, animated: true, completion: nil)
     }
 }

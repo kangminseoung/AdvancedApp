@@ -11,6 +11,7 @@ import SnapKit
 class SearchCollectionViewCell: UICollectionViewCell {
     private let titleLabel = UILabel()
     private let priceLabel = UILabel()
+    private let thumbnailImageView = UIImageView()
 
     override init(frame: CGRect) {
         super.init(frame: frame)
@@ -21,44 +22,56 @@ class SearchCollectionViewCell: UICollectionViewCell {
         fatalError("init(coder:) has not been implemented")
     }
 
-    // 셀 초기화
-    override func prepareForReuse() {
-        super.prepareForReuse()
-        titleLabel.text = nil
-        priceLabel.text = nil
-    }
-
     private func setupUI() {
-        contentView.backgroundColor = .white // 배경색 설정
         contentView.layer.borderWidth = 1
         contentView.layer.borderColor = UIColor.black.cgColor
         contentView.layer.cornerRadius = 8
+        contentView.backgroundColor = .white
 
-        // Title Label
-        titleLabel.font = .boldSystemFont(ofSize: 16)
-        titleLabel.textColor = .black
-        titleLabel.numberOfLines = 1 // 한 줄로 제한
+        thumbnailImageView.contentMode = .scaleAspectFit
+        thumbnailImageView.layer.cornerRadius = 8
+        thumbnailImageView.clipsToBounds = true
+        contentView.addSubview(thumbnailImageView)
+        thumbnailImageView.snp.makeConstraints { make in
+            make.left.equalToSuperview().offset(8)
+            make.centerY.equalToSuperview()
+            make.width.height.equalTo(50)
+        }
+
+        titleLabel.font = UIFont.boldSystemFont(ofSize: 16)
         contentView.addSubview(titleLabel)
         titleLabel.snp.makeConstraints { make in
             make.top.equalToSuperview().offset(8)
-            make.left.right.equalToSuperview().inset(8) // 좌우 여백 추가
+            make.left.equalTo(thumbnailImageView.snp.right).offset(8)
+            make.right.equalToSuperview().offset(-8)
         }
 
-        // Price Label
-        priceLabel.font = .systemFont(ofSize: 14)
+        priceLabel.font = UIFont.systemFont(ofSize: 14)
         priceLabel.textColor = .gray
-        priceLabel.numberOfLines = 1 // 한 줄로 제한
         contentView.addSubview(priceLabel)
         priceLabel.snp.makeConstraints { make in
             make.top.equalTo(titleLabel.snp.bottom).offset(4)
-            make.left.right.equalTo(titleLabel)
-            make.bottom.lessThanOrEqualToSuperview().offset(-8) // 레이아웃 깨짐 방지
+            make.left.equalTo(titleLabel)
+            make.bottom.equalToSuperview().offset(-8)
         }
     }
 
-    // 데이터 설정
-    func configure(with book: Book) {
+    func configure(with book: KakaoBook) {
         titleLabel.text = book.title
-        priceLabel.text = book.price
+        priceLabel.text = "₩\(book.price)"
+        if let url = URL(string: book.thumbnail) {
+            loadImage(from: url) { [weak self] image in
+                DispatchQueue.main.async {
+                    self?.thumbnailImageView.image = image
+                }
+            }
+        }
+    }
+
+    private func loadImage(from url: URL, completion: @escaping (UIImage?) -> Void) {
+        URLSession.shared.dataTask(with: url) { data, _, _ in
+            guard let data = data else { return completion(nil) }
+            completion(UIImage(data: data))
+        }.resume()
     }
 }

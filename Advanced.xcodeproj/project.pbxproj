@@ -7,10 +7,16 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CC89C92B2D26202500E04C12 /* Advanced.xcdatamodeld in Sources */ = {isa = PBXBuildFile; fileRef = CC89C9292D26202500E04C12 /* Advanced.xcdatamodeld */; };
+		CC89C93A2D26754200E04C12 /* Book+CoreDataClass.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC89C9382D26754200E04C12 /* Book+CoreDataClass.swift */; };
+		CC89C93B2D26754200E04C12 /* Book+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = CC89C9392D26754200E04C12 /* Book+CoreDataProperties.swift */; };
 		CCFEE24C2D227D5B00E05773 /* SnapKit in Frameworks */ = {isa = PBXBuildFile; productRef = CCFEE24B2D227D5B00E05773 /* SnapKit */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		CC89C92A2D26202500E04C12 /* Advanced.xcdatamodel */ = {isa = PBXFileReference; lastKnownFileType = wrapper.xcdatamodel; path = Advanced.xcdatamodel; sourceTree = "<group>"; };
+		CC89C9382D26754200E04C12 /* Book+CoreDataClass.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Book+CoreDataClass.swift"; sourceTree = "<group>"; };
+		CC89C9392D26754200E04C12 /* Book+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Book+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		CCF2BF472D1CE2E3007B464B /* Advanced.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Advanced.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -50,6 +56,9 @@
 		CCF2BF3E2D1CE2E3007B464B = {
 			isa = PBXGroup;
 			children = (
+				CC89C9382D26754200E04C12 /* Book+CoreDataClass.swift */,
+				CC89C9392D26754200E04C12 /* Book+CoreDataProperties.swift */,
+				CC89C9292D26202500E04C12 /* Advanced.xcdatamodeld */,
 				CCF2BF492D1CE2E3007B464B /* Advanced */,
 				CCF2BF482D1CE2E3007B464B /* Products */,
 			);
@@ -141,6 +150,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CC89C93A2D26754200E04C12 /* Book+CoreDataClass.swift in Sources */,
+				CC89C93B2D26754200E04C12 /* Book+CoreDataProperties.swift in Sources */,
+				CC89C92B2D26202500E04C12 /* Advanced.xcdatamodeld in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -359,6 +371,19 @@
 			productName = SnapKit;
 		};
 /* End XCSwiftPackageProductDependency section */
+
+/* Begin XCVersionGroup section */
+		CC89C9292D26202500E04C12 /* Advanced.xcdatamodeld */ = {
+			isa = XCVersionGroup;
+			children = (
+				CC89C92A2D26202500E04C12 /* Advanced.xcdatamodel */,
+			);
+			currentVersion = CC89C92A2D26202500E04C12 /* Advanced.xcdatamodel */;
+			path = Advanced.xcdatamodeld;
+			sourceTree = "<group>";
+			versionGroupType = wrapper.xcdatamodel;
+		};
+/* End XCVersionGroup section */
 	};
 	rootObject = CCF2BF3F2D1CE2E3007B464B /* Project object */;
 }
