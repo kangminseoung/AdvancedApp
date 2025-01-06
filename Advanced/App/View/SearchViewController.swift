@@ -183,46 +183,37 @@ class SearchViewController: UIViewController, UICollectionViewDelegate, UICollec
         recentBooksStackView.arrangedSubviews.forEach { $0.removeFromSuperview() } // 기존 뷰 제거
 
         for book in viewModel.recentBooks {
-            let imageView = UIImageView()
-            imageView.contentMode = .scaleAspectFill
-            imageView.layer.cornerRadius = 35 // 반지름 설정
-            imageView.clipsToBounds = true
-            imageView.layer.borderColor = UIColor.gray.cgColor // 경계선 설정(옵션)
-            imageView.layer.borderWidth = 1.0
+            let button = UIButton()
+            button.layer.cornerRadius = 35 // 원형 버튼
+            button.clipsToBounds = true
+            button.layer.borderWidth = 1.0
+            button.layer.borderColor = UIColor.gray.cgColor
+            button.imageView?.contentMode = .scaleAspectFill
 
-            // 이미지 로드
+            // 이미지 설정
             if let url = URL(string: book.thumbnailURL ?? "") {
-                loadImage(from: url) { [weak imageView] image in
-                    imageView?.image = image
+                loadImage(from: url) { [weak button] image in
+                    button?.setImage(image, for: .normal)
                 }
             } else {
-                imageView.image = UIImage(named: "placeholder")
+                button.setImage(UIImage(named: "placeholder"), for: .normal)
             }
 
-            // CircleView
-            let circleView = UIView()
-            circleView.layer.cornerRadius = 35
-            circleView.clipsToBounds = true
-            circleView.addSubview(imageView)
+            // 버튼 클릭 이벤트
+            button.addTarget(self, action: #selector(handleRecentBookTap(_:)), for: .touchUpInside)
+            button.tag = viewModel.recentBooks.firstIndex(of: book) ?? 0 // 버튼 태그에 인덱스 설정
 
-            imageView.snp.makeConstraints { make in
-                make.edges.equalToSuperview() // CircleView와 동일 크기
-            }
-
-            circleView.isUserInteractionEnabled = true
-            let tapGesture = UITapGestureRecognizer(target: self, action: #selector(handleCircleTap(_:)))
-            circleView.addGestureRecognizer(tapGesture)
-
-            recentBooksStackView.addArrangedSubview(circleView)
+            recentBooksStackView.addArrangedSubview(button)
         }
 
         recentBooksStackView.isHidden = viewModel.recentBooks.isEmpty
     }
 
-    @objc private func handleCircleTap(_ sender: UITapGestureRecognizer) {
-        guard let index = recentBooksStackView.arrangedSubviews.firstIndex(of: sender.view!) else { return }
-        guard let book = viewModel.recentBook(at: index) else { return }
-//        let detailVC = DetailViewController(book: book)
+    @objc private func handleRecentBookTap(_ sender: UIButton) {
+        let index = sender.tag // 버튼의 태그에서 인덱스 가져오기
+        guard let selectedBook = viewModel.recentBook(at: index) else { return }
+
+//        let detailVC = DetailViewController(kakaoBook: selectedBook)
 //        present(detailVC, animated: true, completion: nil)
     }
     

@@ -11,6 +11,7 @@ import SnapKit
 import CoreData
 
 protocol DetailViewControllerDelegate: AnyObject {
+    
     func didSaveBook(_ book: Book)
 }
 
